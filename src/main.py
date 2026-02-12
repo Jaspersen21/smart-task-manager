@@ -35,3 +35,9 @@ manager.list_tasks()
 print("\nAfter undo:")
 manager.undelete_task()
 manager.list_tasks()
+
+print("\nNext task to do:")
+next_task = manager.get_next_task()
+if next_task:
+    print(next_task.title, next_task.priority) # Should print "Email client" with priority 1 else: print("No tasks available")
+    
