@@ -1,5 +1,7 @@
 from task import Task
 import heapq
+import json
+
 class TaskManager:
     def __init__(self):
         self.tasks = []
@@ -63,5 +65,53 @@ class TaskManager:
                 continue
             return task
         return None  # No tasks available
+    
+    def save_to_file(self,filename):
+        data = []
+        for task in self.tasks:
+            data.append({
+                "id": task.id,
+                "title": task.title,
+                "priority": task.priority,
+                "completed": task.completed,
+                "deleted": task.deleted
+            })
+        with open(filename,"w") as f:
+            json.dump(data,f,indent=4)
+
+
+
+    def load_from_file(self, filename):
+        with open(filename,"r") as f:
+            data = json.load(f)
+
+            #clear current tasks
+            self.tasks = []
+            self.tasks_by_id = {}
+            self.priority_queue = []
+            self.history_stack = []
+
+            for item in data:
+                task = Task(
+                    item["id"],
+                    item["title"],
+                    item["priority"]
+                )
+
+                task.completed = item["completed"]
+                task.deleted = item["deleted"]
+
+                self.tasks.append(task)
+                self.tasks_by_id[task.id] = task
+
+                #Only push non deleted tasks to the priority queue
+                if not task.deleted:
+                    heapq.heappush(self.priority_queue, (task.priority, task.id, task))
+
+            
+
+
+
+    
 
                        

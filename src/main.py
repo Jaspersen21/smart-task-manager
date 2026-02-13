@@ -53,3 +53,11 @@ manager.list_tasks()  # Task 1 should be marked as completed but not deleted
 print("undo 2")
 manager.undo()  
 manager.list_tasks()  # Task 1 should be marked as not completed and not deleted
+
+manager.save_to_file("tasks.json")
+
+new_manager = TaskManager()
+new_manager.load_from_file("tasks.json")
+
+print("\nLoaded tasks from file:")
+new_manager.list_tasks()
