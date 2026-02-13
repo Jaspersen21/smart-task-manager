@@ -4,7 +4,7 @@ class TaskManager:
     def __init__(self):
         self.tasks = []
         self.tasks_by_id = {}
-        self.deleted_stack = []
+        self.history_stack = []
         self.next_id = 1
         self.priority_queue = []
         
@@ -20,13 +20,30 @@ class TaskManager:
         task = self.tasks_by_id.get(task_id)
         if task and not task.deleted:
             task.mark_deleted()
-            self.deleted_stack.append(task)
+            self.history_stack.append(("delete", task))
+
+    def complete_task(self,task_id):
+        task = self.tasks_by_id.get(task_id)
+
+        if task and not task.deleted and not task.completed:
+            task.completed = True
+            self.history_stack.append(("complete", task))
 
 
-    def undelete_task(self):
-        if self.deleted_stack:
-            task = self.deleted_stack.pop()
-            task.restore()   
+    def undo(self):
+        if not self.history_stack:
+            return
+
+        action, task = self.history_stack.pop()
+        if action == "delete":
+            task.deleted = False
+        elif action == "complete":
+            task.completed = False                
+
+
+    #def undelete_task(self):
+        #if self.deleted_stack:
+            # task.restore()   
 
     def list_tasks(self):
         for task in self.tasks:

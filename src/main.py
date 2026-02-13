@@ -33,7 +33,7 @@ manager.delete_task(2)
 manager.list_tasks()
 
 print("\nAfter undo:")
-manager.undelete_task()
+manager.undo()  # Undo deletion of task 2
 manager.list_tasks()
 
 print("\nNext task to do:")
@@ -41,3 +41,15 @@ next_task = manager.get_next_task()
 if next_task:
     print(next_task.title, next_task.priority) # Should print "Email client" with priority 1 else: print("No tasks available")
     
+print("Testing complete + delete + undo:")
+manager.complete_task(1)
+manager.delete_task(1)
+manager.list_tasks()  # Task 1 should be marked as completed and deleted
+
+print("undo 1")
+manager.undo()
+manager.list_tasks()  # Task 1 should be marked as completed but not deleted
+
+print("undo 2")
+manager.undo()  
+manager.list_tasks()  # Task 1 should be marked as not completed and not deleted
