@@ -56,8 +56,27 @@ manager.list_tasks()  # Task 1 should be marked as not completed and not deleted
 
 manager.save_to_file("tasks.json")
 
-new_manager = TaskManager()
-new_manager.load_from_file("tasks.json")
+manager = TaskManager()
+manager.load_from_file("tasks.json")
 
 print("\nLoaded tasks from file:")
-new_manager.list_tasks()
+manager.list_tasks()
+
+
+print("\nEditing Task 1 priority 3 to 0")
+manager.edit_task(1, new_priority = 0)
+manager.list_tasks()  # Task 1 should now have priority 0
+
+
+
+print("\n Next task after edit")
+next_task = manager.get_next_task()
+print(next_task.title, next_task.priority)  # Should print "Submit report" with priority 0
+
+print("\nUndo edit")
+manager.undo()
+manager.list_tasks()  # Task 1 should now have priority 3 again
+
+print("\nNext task after undo edit")
+next_task = manager.get_next_task()
+print(next_task.title, next_task.priority)  # Should print "Email client" with priority 1 again

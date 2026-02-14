@@ -22,25 +22,52 @@ class TaskManager:
         task = self.tasks_by_id.get(task_id)
         if task and not task.deleted:
             task.mark_deleted()
-            self.history_stack.append(("delete", task))
+            self.history_stack.append(
+                {
+                    "action": "delete",
+                    "task_id": task_id
+                }
+            )
+
+            self._rebuild_heap()  # Rebuild the heap to remove deleted tasks from consideration
 
     def complete_task(self,task_id):
         task = self.tasks_by_id.get(task_id)
 
         if task and not task.deleted and not task.completed:
             task.completed = True
-            self.history_stack.append(("complete", task))
+            self.history_stack.append(
+                {
+                    "action": "complete",
+                    "task_id": task_id
+                }
+            )
 
 
     def undo(self):
         if not self.history_stack:
             return
 
-        action, task = self.history_stack.pop()
+        entry = self.history_stack.pop()
+        action = entry["action"] 
+
         if action == "delete":
+            task = self.tasks_by_id[entry["task_id"]]             
             task.deleted = False
+            self._rebuild_heap()
+
         elif action == "complete":
-            task.completed = False                
+            task = self.tasks_by_id[entry["task_id"]]
+            task.completed = False
+        elif action == "edit":
+            task = self.tasks_by_id[entry["task_id"]]
+
+            for key, value in entry["old_values"].items():
+                setattr(task, key, value)
+
+            #if priority was changed, we need to rebuild the heap to maintain consistency
+            if "priority" in entry["old_values"]:
+                self._rebuild_heap()
 
 
     #def undelete_task(self):
@@ -107,6 +134,47 @@ class TaskManager:
                 #Only push non deleted tasks to the priority queue
                 if not task.deleted:
                     heapq.heappush(self.priority_queue, (task.priority, task.id, task))
+
+
+    def edit_task(self, task_id, new_title = None, new_priority = None):
+        task = self.tasks_by_id.get(task_id)
+        
+        if not task or task.deleted:
+            return
+        
+        old_values = {}
+
+        #Track old title 
+        if new_title is not None and new_title != task.title:
+            old_values["title"] = task.title
+            task.title = new_title
+
+        # Track old priority 
+        if new_priority is not None and new_priority != task.priority:
+            old_values["priority"] = task.priority
+            task.priority = new_priority    
+
+            #rebuild heap to maintain consistency after priority change
+            self._rebuild_heap()
+            
+
+
+        if old_values:
+            self.history_stack.append({
+                "action": "edit",
+                "task_id": task_id,
+                "old_values": old_values
+            })  
+
+            
+
+    def _rebuild_heap(self):
+        self.priority_queue = []
+        for task in self.tasks:
+            if not task.deleted:
+                heapq.heappush(self.priority_queue, (task.priority, task.id, task))   
+         
+                      
 
             
 
