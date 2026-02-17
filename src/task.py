@@ -5,6 +5,7 @@ class Task:
         self.priority = priority
         self.completed = False
         self.deleted = False
+        self.version = 0
 
 
     def mark_complete(self): 

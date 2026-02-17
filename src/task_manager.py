@@ -15,7 +15,7 @@ class TaskManager:
         task = Task(self.next_id,title,priority)
         self.tasks.append(task) 
         self.tasks_by_id[self.next_id] = task
-        heapq.heappush(self.priority_queue, (priority, task.id, task))
+        heapq.heappush(self.priority_queue, (priority, task.id, task.version))
         self.next_id += 1
 
     def delete_task(self,task_id):
@@ -29,7 +29,8 @@ class TaskManager:
                 }
             )
 
-            self._rebuild_heap()  # Rebuild the heap to remove deleted tasks from consideration
+
+
 
     def complete_task(self,task_id):
         task = self.tasks_by_id.get(task_id)
@@ -54,7 +55,8 @@ class TaskManager:
         if action == "delete":
             task = self.tasks_by_id[entry["task_id"]]             
             task.deleted = False
-            self._rebuild_heap()
+            task.version += 1  # Increment version to invalidate old heap entries
+            heapq.heappush(self.priority_queue, (task.priority, task.id, task.version))  # Re-add the task to the priority queue
 
         elif action == "complete":
             task = self.tasks_by_id[entry["task_id"]]
@@ -67,7 +69,8 @@ class TaskManager:
 
             #if priority was changed, we need to rebuild the heap to maintain consistency
             if "priority" in entry["old_values"]:
-                self._rebuild_heap()
+                task.version += 1  # Increment version to invalidate old heap entries
+                heapq.heappush(self.priority_queue, (task.priority, task.id, task.version))  # Push updated task to heap
 
 
     #def undelete_task(self):
@@ -84,12 +87,20 @@ class TaskManager:
 
     def get_next_task(self):
         while self.priority_queue:
-            priority, task_id, task = self.priority_queue[0]  # peek at the top of the heap
+            priority, task_id, version = self.priority_queue[0]  # peek at the top of the heap
+
+            task = self.tasks_by_id[task_id]
 
             #skip deleted tasks
             if task.deleted:
                 heapq.heappop(self.priority_queue)  # remove the deleted task
                 continue
+
+            #skip outdated version
+            if version != task.version:
+                heapq.heappop(self.priority_queue)  # remove the outdated entry
+                continue
+
             return task
         return None  # No tasks available
     
@@ -101,7 +112,8 @@ class TaskManager:
                 "title": task.title,
                 "priority": task.priority,
                 "completed": task.completed,
-                "deleted": task.deleted
+                "deleted": task.deleted,
+                "version": task.version
             })
         with open(filename,"w") as f:
             json.dump(data,f,indent=4)
@@ -127,13 +139,14 @@ class TaskManager:
 
                 task.completed = item["completed"]
                 task.deleted = item["deleted"]
+                task.version = item.get("version", 0)
 
                 self.tasks.append(task)
                 self.tasks_by_id[task.id] = task
 
                 #Only push non deleted tasks to the priority queue
                 if not task.deleted:
-                    heapq.heappush(self.priority_queue, (task.priority, task.id, task))
+                    heapq.heappush(self.priority_queue, (task.priority, task.id, task.version))
 
 
     def edit_task(self, task_id, new_title = None, new_priority = None):
@@ -152,10 +165,12 @@ class TaskManager:
         # Track old priority 
         if new_priority is not None and new_priority != task.priority:
             old_values["priority"] = task.priority
-            task.priority = new_priority    
+            task.priority = new_priority
 
-            #rebuild heap to maintain consistency after priority change
-            self._rebuild_heap()
+
+            task.version += 1
+            heapq.heappush(self.priority_queue, (task.priority, task.id, task.version))
+
             
 
 
@@ -168,11 +183,12 @@ class TaskManager:
 
             
 
-    def _rebuild_heap(self):
-        self.priority_queue = []
-        for task in self.tasks:
-            if not task.deleted:
-                heapq.heappush(self.priority_queue, (task.priority, task.id, task))   
+   # def _rebuild_heap(self):
+    #    self.priority_queue = []
+     #   for task in self.tasks:
+      #      if not task.deleted:
+       #         heapq.heappush(self.priority_queue, (task.priority, task.id, task.version))
+                   
          
                       
 

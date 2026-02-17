@@ -4,20 +4,23 @@
         "title": "Submit report",
         "priority": 3,
         "completed": false,
-        "deleted": false
+        "deleted": false,
+        "version": 1
     },
     {
         "id": 2,
         "title": "Prepare presentation",
         "priority": 2,
         "completed": false,
-        "deleted": false
+        "deleted": false,
+        "version": 1
     },
     {
         "id": 3,
         "title": "Email client",
         "priority": 1,
         "completed": false,
-        "deleted": false
+        "deleted": false,
+        "version": 0
     }
 ]
